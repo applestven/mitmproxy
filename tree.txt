@@ -1,0 +1,6 @@
+ws-interceptor/
+├── proxy.py         
+├── logger.py      
+├── rules.py        
+├── client_test.py
+└── README.md
