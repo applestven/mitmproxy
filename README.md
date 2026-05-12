@@ -37,6 +37,8 @@ adb shell am start -a android.intent.action.VIEW  -d file:///sdcard/Download/mit
 - 测试abd打开https mitweb是否拿到数据
 adb shell am start -a android.intent.action.VIEW -d https://httpbin.org/get
 
+adb shell am start -a android.intent.action.VIEW -d https://baidu.com
+ 
 
 ## 其他命令（不一定能使用）
 
