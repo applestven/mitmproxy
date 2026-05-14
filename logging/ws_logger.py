@@ -168,7 +168,7 @@ class LogRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"error": str(e)}).encode())
 
     def log_message(self, format, *args):
-        # 屏蔽HTTP服务器自身的访问日志
+        # 屏蔽HTTP服务器自身的访问日志 
         pass
 
 # ---------- mitmproxy addon ----------
@@ -181,12 +181,17 @@ class WebSocketLogger:
             f"URL: {flow.request.pretty_url}",
             f"Headers: {dict(flow.request.headers)}",
         ]
-        if flow.request.content:
+
+        # 不要直接访问 flow.request.content / get_text()，它会触发 mitmproxy 按 Content-Encoding 解码，
+        # 遇到服务端乱填 gzip（实际不是 gzip）会抛 BadGzipFile。
+        raw = flow.request.raw_content
+        if raw:
             try:
-                body_text = flow.request.get_text()
+                body_text = raw.decode("utf-8")
             except Exception:
-                body_text = "[Binary data cannot be decoded]"
-            log_msg.append(f"Body: {body_text}")
+                body_text = f"[Binary {len(raw)} bytes]"
+            log_msg.append(f"Body(raw): {body_text}")
+
         ws_logger.info("\n".join(log_msg))
 
     def response(self, flow: http.HTTPFlow):
@@ -194,12 +199,16 @@ class WebSocketLogger:
             f"Status: {flow.response.status_code}",
             f"Response Headers: {dict(flow.response.headers)}",
         ]
-        if flow.response.content:
+
+        raw = flow.response.raw_content
+        if raw:
+            # 同上：不触发自动解码，直接记 raw。
             try:
-                body_text = flow.response.get_text()
+                body_text = raw.decode("utf-8")
             except Exception:
-                body_text = "[Binary data cannot be decoded]"
-            log_msg.append(f"Response Body: {body_text}")
+                body_text = f"[Binary {len(raw)} bytes]"
+            log_msg.append(f"Response Body(raw): {body_text}")
+
         log_msg.append(f"{'='*30} HTTP RESPONSE END {'='*30}\n")
         ws_logger.info("\n".join(log_msg))
 
